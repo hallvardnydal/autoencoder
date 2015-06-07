@@ -73,4 +73,4 @@ def test_SdA(sample_size         = 64,
     plt.show()
 	
 if __name__ == '__main__':
-    #test_SdA()
+    test_SdA()
