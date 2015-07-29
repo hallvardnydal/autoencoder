@@ -18,7 +18,7 @@ class HiddenLayer(object):
             b = None,
             activation = None,
             dropout_p = 0.0,
-            maxoutsize = 1):
+            last_layer = False):
             
         if activation == None:
             activation = self.rectify
@@ -66,25 +66,20 @@ class HiddenLayer(object):
 
         self.W = W
         self.b = b
-
+        
+        
         output = T.dot(input,self.W) + self.b
-
-        # Maxout                                                                
-        maxout_out = None                                                       
-        for i in xrange(maxoutsize):                                            
-            t = output[:,i::maxoutsize]                                   
-            if maxout_out is None:                                              
-                maxout_out = t                                                  
-            else:                                                               
-                maxout_out = T.maximum(maxout_out, t)  
-
-        lin_output = self.dropout(maxout_out,dropout_p = dropout_p)
-        self.output = (
-            lin_output if activation is None
-            else activation(lin_output)
-        )
+        
+        if last_layer == False:
+            self.output = self.rectify(output)
+        else:
+            self.output = output
+            
         # parameters of the model
         self.params = [self.W, self.b]
+        
+    def L2(self,y):
+        return T.mean((self.output-y)**2)
 
     def rectify(self,X):
         return T.maximum(X,0)

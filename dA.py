@@ -8,9 +8,48 @@ import theano
 import theano.tensor as T
 from theano.tensor.shared_randomstreams import RandomStreams
 
-from logistic_sgd import load_data
-
 import PIL.Image as Image
+
+from collections import OrderedDict 
+
+def stochasticGradient(cost,params,lr = 0.01):
+    '''
+    Stochastic Gradient Descent
+    '''
+    grads = T.grad(cost, params)
+    updates = OrderedDict()
+
+    for param, grad in zip(params, grads):
+        updates[param] = param - lr * grad
+
+    return updates
+
+def apply_momentum(updates, params=None, momentum=0.9):
+    """
+    lasagne
+    """
+
+    if params is None:
+        params = updates.keys()
+    updates = OrderedDict(updates)
+
+    for param in params:
+        value = param.get_value(borrow=True)
+        velocity = theano.shared(np.zeros(value.shape, dtype=value.dtype),
+                                    broadcastable=param.broadcastable)
+        x = momentum * velocity + updates[param]
+        updates[velocity] = x - param
+        updates[param] = x
+
+    return updates
+
+
+def momentum(cost, params, lr = 0.01, momentum=0.9):
+    """
+    lasagne
+    """
+    updates = stochasticGradient(cost, params, lr = lr)
+    return apply_momentum(updates, momentum=momentum)
 
 
 class dA(object):
@@ -94,11 +133,13 @@ class dA(object):
 
         cost = T.mean((self.x-z)**2)
 
-        gparams = T.grad(cost, self.params)
-        updates = [
-            (param, param - learning_rate * gparam)
-            for param, gparam in zip(self.params, gparams)
-        ]
+        #gparams = T.grad(cost, self.params)
+        #updates = [
+        #    (param, param - learning_rate * gparam)
+        #    for param, gparam in zip(self.params, gparams)
+        #]
+        
+        updates = stochasticGradient(cost, self.params,lr=learning_rate)
 
         return (cost, updates, y, self.get_reconstructed_input)
 

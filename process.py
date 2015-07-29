@@ -30,8 +30,10 @@ class Process(object):
         return img_input,img_labels
         
     def normalize(self,img):
-        img -= img.mean()
-        img /= img.std()
+        
+        for n in xrange(img.shape[0]):
+            img[n] -= img[n].mean()
+            img[n] /= img[n].std()
         return img
 
     def init(self,directory_input,directory_labels):
@@ -68,15 +70,16 @@ class Process(object):
     def generate_set(self, images, sample_size, stride, img_size):
         
         assert img_size[0] % sample_size == 0
-        number = img_size[0]/sample_size
+        number1 = img_size[0]/sample_size
+        number2 = img_size[1]/sample_size
         
-        img_batched = np.zeros((images.shape[0]*number**2, sample_size**2))
-        table       = np.zeros((images.shape[0]*number**2, 3))
+        img_batched = np.zeros((images.shape[0]*number1*number2, sample_size**2))
+        table       = np.zeros((images.shape[0]*number1*number2, 3))
 
         table_number = 0
         for img_number in xrange(images.shape[0]):
-            for n in xrange(number):
-                for m in xrange(number):
+            for n in xrange(number1):
+                for m in xrange(number2):
 
                     img_start_y = stride*n
                     img_end_y   = stride*n + sample_size
@@ -109,3 +112,36 @@ class Process(object):
         img      /= count
 
         return img
+        
+    def average(self,img):
+        img_avg = np.zeros(img.shape)
+        avg = np.mean(img,axis=0)
+    
+        for n in xrange(img.shape[0]):
+            img_avg[n] = avg 
+
+        return img_avg
+        
+    def manipulate(self,img,stride=6):
+        img_avg = np.zeros(img.shape)
+        for n in xrange(0,img.shape[0],stride):
+            img_avg[n:n+stride] = self.average(img[n:n+stride])
+        return img_avg
+        
+    def expand(self,i,stride):
+        out = np.zeros((stride,i.shape[0]))
+        for n in xrange(stride):
+            out[n] = i
+        return out
+        
+    def xz_stack(self,stack,images=2,stride=6):
+        xz_stack = stack[:,:images,:]
+
+        xz_avg = np.zeros((xz_stack.shape[1],xz_stack.shape[0]*stride,xz_stack.shape[2]))
+        
+        for n in xrange(xz_avg.shape[0]):
+            for m in xrange(xz_stack.shape[0]):
+                xz_avg[n,stride*m:stride*(m+1)] = self.expand(xz_stack[m,n],stride)
+                
+        return xz_avg
+            
