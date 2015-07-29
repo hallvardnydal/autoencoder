@@ -10,12 +10,12 @@ from SdA              import SdA
     
 def test_SdA(sample_size         = 60,
              finetune_lr         = 0.01, 
-             pretraining_epochs  = 50,
+             pretraining_epochs  = 10,
              pretrain_lr         = 0.01, 
-             training_epochs     = 100, 
+             training_epochs     = 80, 
              batch_size          = 30,
              corruption_levels   = [0.2],
-             hidden_layers_sizes = [1000],
+             hidden_layers_sizes = [2000],
              img_size = (1020,1020),
              img_size_test = (600,1020)):
     
