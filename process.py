@@ -1,6 +1,7 @@
 import numpy as np
 import glob
 from PIL import Image
+import cv2
 
 class Process(object):
 
@@ -122,10 +123,68 @@ class Process(object):
 
         return img_avg
         
+    def local_normalization(self,img,kernel = (500,500)):
+        img_avg = np.zeros(img.shape)
+    
+        for n in xrange(img.shape[0]):
+            for m in xrange(img.shape[1]-kernel[0]):
+                for k in xrange(img.shape[2]-kernel[1]):
+                    ROI = img_avg[n,m:m+kernel[0],k:k+kernel[1]]
+                    img_avg[n,m:m+kernel[0],k:k+kernel[1]] = (ROI-ROI.mean())/ROI.std()
+
+        return img_avg
+        
+    def gaussian_average(self,img,stride,sigma=1):
+        weight = np.arange(stride)
+        weight -= weight.mean()
+        weight = (1/(2.*np.pi*sigma))*np.exp((-weight**2)/(2*sigma**2))
+        weight /= weight.sum()
+        
+        img_avg = np.zeros(img.shape)      
+        avg = np.zeros(img.shape[1])
+        
+        for n in xrange(img.shape[0]):
+            avg += img[n]*weight[n]
+
+        for n in xrange(img.shape[0]):
+            img_avg[n] = avg 
+
+        return img_avg
+        
+    def apply_clahe(self,img_input):
+        img_input = self.normalize(img_input)
+        img_input -= img_input.min()
+        img_input /= img_input.max()
+        img_input *= 255.
+        
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(15,15))
+
+        clahe_normalized = np.zeros(img_input.shape)
+        for n in xrange(img_input.shape[0]):
+            clahe_normalized[n] =  clahe.apply(img_input[n].astype(np.uint8))
+        
+        return self.normalize(clahe_normalized)
+    
+    def pick_one(self,img,stride):
+        one = np.zeros(img.shape)
+        
+        for n in xrange(img.shape[0]):
+            one[n] = img[(stride/2)-1]
+        return img
+        
     def manipulate(self,img,stride=6):
         img_avg = np.zeros(img.shape)
-        for n in xrange(0,img.shape[0],stride):
-            img_avg[n:n+stride] = self.average(img[n:n+stride])
+        
+        for m in xrange(img.shape[0]):
+            for n in xrange(0,img.shape[1],stride):
+                img_avg[m,n:n+stride] = self.average(img[m,n:n+stride])
+        #for m in xrange(img.shape[0]):
+        #    for n in xrange(0,img.shape[1],stride):
+        #        img_avg[m,n:n+stride] = self.gaussian_average(img[m,n:n+stride],stride)
+        #for m in xrange(img.shape[0]):
+        #    for n in xrange(0,img.shape[1],stride):
+        #        img_avg[m,n:n+stride] = self.pick_one(img[m,n:n+stride],stride)
+        
         return img_avg
         
     def expand(self,i,stride):

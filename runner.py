@@ -10,9 +10,9 @@ from SdA              import SdA
     
 def test_SdA(sample_size         = 60,
              finetune_lr         = 0.01, 
-             pretraining_epochs  = 10,
+             pretraining_epochs  = 20,
              pretrain_lr         = 0.01, 
-             training_epochs     = 80, 
+             training_epochs     = 100, 
              batch_size          = 30,
              corruption_levels   = [0.2],
              hidden_layers_sizes = [2000],
@@ -21,7 +21,10 @@ def test_SdA(sample_size         = 60,
     
     process = Process()
     img_input,img_labels = process.read_in_images(["train-input"],["train-labels"])
+    
     img_input = process.normalize(img_input)  
+    #img_input = process.apply_clahe(img_input)
+    #img_input = process.local_normalization(img_input)  
     
     img_input = img_input[:,:img_size[0],:img_size[1]]
     
@@ -51,7 +54,7 @@ def test_SdA(sample_size         = 60,
     n_train_batches = train_set_x.get_value(borrow=True).shape[0]
     n_train_batches /= batch_size
 
-    np_rng = np.random.RandomState(89677)
+    np_rng = np.random.RandomState()
     print '... building the model'
 
     sda = SdA(
@@ -122,6 +125,11 @@ def test_SdA(sample_size         = 60,
     plt.imshow(img_output[0],cmap=plt.cm.gray)
     
     xz = process.xz_stack(img_input)
+    
+    for m in xrange(xz.shape[0]):
+        for n in xrange(xz.shape[1]):
+            xz[m,n] = (xz[m,n]-xz[m,n].mean())/xz[m,n].std()
+    
     xz_train, table    =process.generate_set(xz, sample_size = sample_size, stride = sample_size, img_size = img_size_test)
     xz_train = xz_train.astype(np.float32)
     test_set_x.set_value(xz_train)
