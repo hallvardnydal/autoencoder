@@ -175,15 +175,15 @@ class Process(object):
     def manipulate(self,img,stride=6):
         img_avg = np.zeros(img.shape)
         
-        #for m in xrange(img.shape[0]):
-        #    for n in xrange(0,img.shape[1],stride):
-        #        img_avg[m,n:n+stride] = self.average(img[m,n:n+stride])
+        for m in xrange(img.shape[0]):
+            for n in xrange(0,img.shape[1],stride):
+                img_avg[m,n:n+stride] = self.average(img[m,n:n+stride])
         #for m in xrange(img.shape[0]):
         #    for n in xrange(0,img.shape[1],stride):
         #        img_avg[m,n:n+stride] = self.gaussian_average(img[m,n:n+stride],stride)
-        for m in xrange(img.shape[0]):
-            for n in xrange(0,img.shape[1],stride):
-                img_avg[m,n:n+stride] = self.pick_one(img[m,n:n+stride],stride)
+        #for m in xrange(img.shape[0]):
+        #    for n in xrange(0,img.shape[1],stride):
+        #        img_avg[m,n:n+stride] = self.pick_one(img[m,n:n+stride],stride)
         
         return img_avg
         
